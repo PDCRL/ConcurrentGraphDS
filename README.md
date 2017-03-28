@@ -14,9 +14,17 @@ The subdirectory src/data_structure provides the source code for Graph data stru
 The subdirectory src/acyclicity provides the source code for Graph data structure variants which maintain acycylicity, as decribed below:
 1. Sequential Graph data structure
 2. Concurrent Coarse Lock Graph Data Structure
-3. Concurrent Fine Lock Graph Data Structure without deletion of incoming edges (Cycle detection using collect)
-4. Concurrent Fine Lock Graph Data Structure with deletion of incoming edges (Cycle detection using Reachability)
-5. Concurrent Fine Lock Graph Data Structure without deletion of incoming edges (Cycle detection using collect)
-6. Concurrent Fine Lock Graph Data Structure with deletion of incoming edges (Cycle detection using Reachability)
+3. Concurrent Fine Lock Graph Data Structure without deletion of incoming edges of deleted vertices (Cycle detection using collect)
+4. Concurrent Fine Lock Graph Data Structure with deletion of incoming edges of deleted vertices (Cycle detection using Reachability)
+5. Concurrent Fine Lock Graph Data Structure without deletion of incoming edges of deleted vertices (Cycle detection using collect)
+6. Concurrent Fine Lock Graph Data Structure with deletion of incoming edges of deleted vertices (Cycle detection using Reachability)
+
+To compile any source file, run the command:
+g++ -std=c++11 filename.cpp -lpthread -o filename.o
+
+To run this binary file, use the following format:
+./filename.o numOfThreads numOfInitialVertices numOfOperationsPerThread
+
+
 
 If you have any questions, please contact: cs15mtech01004@iith.ac.in
