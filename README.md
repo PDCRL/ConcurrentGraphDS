@@ -2,7 +2,6 @@
 This repository contains the implementation of a lock-based Concurrent Graph Data Structure.
 The algorithm is described in technical report '**Maintaining Acyclicity of Concurrent Graph Objects**' which can be accessed here: https://arxiv.org/abs/1611.03947.
 
-Binary files can be found in *bin* directory.
 Source files can be found in *src* directory.
 
 The subdirectory *src/data_structure* provides the source code for Graph data structure variants, as decribed below:
