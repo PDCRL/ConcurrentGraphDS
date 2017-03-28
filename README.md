@@ -30,4 +30,6 @@ Example:
 2. Whereas for a Concurrent program run: ./conc 150 1000 1000
 (A concurrent program of 150 threads with 1000 operations per thread means total 150000 operations.)
 
+You can vary the workload distribution of these operations inside each of these programs.
+
 If you have any questions, please contact: cs15mtech01004@iith.ac.in
