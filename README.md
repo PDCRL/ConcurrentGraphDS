@@ -20,10 +20,10 @@ The subdirectory *src/acyclicity* provides the source code for Graph data struct
 6. Concurrent Fine Lock Graph Data Structure with deletion of incoming edges of deleted vertices (Cycle detection using Reachability)
 
 To compile any source file, run the command:
-```g++ -std=c++11 filename.cpp -lpthread -o filename.o
-```
+`g++ -std=c++11 filename.cpp -lpthread -o filename.o`
+
 To run this binary file, use the following format:
-```./filename.o numOfThreads numOfInitialVertices numOfOperationsPerThread
-```
+`./filename.o numOfThreads numOfInitialVertices numOfOperationsPerThread`
+
 
 If you have any questions, please contact: cs15mtech01004@iith.ac.in
