@@ -257,14 +257,14 @@ int cycle_detect()
 		{
 			cycle = DFS_visit(temp, visited, In_stack);
 			if(cycle)
-				return true;		//dont unlock -> delete vertex
+				return true;	
 		}
 		temp = temp->next;
 	}
 	return false;
 }   
 
-int main(int argc, char*argv[])	//command line arguments - #threads, #vertices initially, #operations per threads
+int main(int argc, char*argv[])		//command line arguments - #threads, #vertices initially, #operations per threads
 {
 	vertexID.store(1);
 	int i;
@@ -282,7 +282,7 @@ int main(int argc, char*argv[])	//command line arguments - #threads, #vertices i
 	//create initial vertices
 	pthread_mutex_init(&lock, NULL);
 	
-	vertexID.store(initial_vertices + 1);		// or +1?
+	vertexID.store(initial_vertices + 1);
 	graph = NULL;
 
 	create_initial_vertices(initial_vertices);

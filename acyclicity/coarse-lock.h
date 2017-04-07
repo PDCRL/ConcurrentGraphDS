@@ -468,7 +468,7 @@ int contains_edge(long long int u, long long int v)
 	if(pred == NULL)	
 		return false;
 
-	if(pred->key == v)		//edge already present
+	if(pred->key == v)		//edge present
 	{
 		return true;
 	}
