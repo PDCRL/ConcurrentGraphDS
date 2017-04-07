@@ -1,6 +1,6 @@
 /*
  * File:
- *   finelock_remove_ie.cpp
+ *   coarse-lock.h
  *
  * Author(s):
  *   Dr. Sathya Peri <sathya_p@iith.ac.in>
@@ -8,27 +8,27 @@
  *   Nandini Singhal <cs15mtech01004@iith.ac.in>
  *
  * Description:
- *   Fine-Grained Lock-based implementation of a concurrent directed graph (represented as adjacency list) without deletion of incoming edges of deleted vertices
+ *   Coarse Lock-based implementation of a concurrent directed graph (represented as adjacency list)
  *
  * Copyright (c) 2017.
  *
- * finelock_remove_ie.cpp is part of ConcurrentGraphDS
+ * coarse-lock.h is part of ConcurrentGraphDS
 */
 
 
-#include "finelock_not_remove_ie.h"
+#include "coarse-lock.h"
 
 atomic<long long int> vertexID;
 int NTHREADS, numOfOperations;
+pthread_mutex_t lock;
 
 void* pthread_call(void *t)
 {
 	long tid=(long)t;
- 	
+
 	long long int u, v;
 	int other, res;
- 
- 	int numOfOperations_addEdge = numOfOperations * 0.25; 		// 25% for add edge
+  	int numOfOperations_addEdge = numOfOperations * 0.25; 		// 25% for add edge
   	int numOfOperations_addVertex = numOfOperations * 0.25; 	// 25% for add vertex
   	int numOfOperations_removeVertex = numOfOperations * 0.1; 	// 10% for remove vertex
   	int numOfOperations_removeEdge = numOfOperations * 0.1; 	// 10% for remove edge
@@ -39,20 +39,21 @@ void* pthread_call(void *t)
 	
 	while(total != 0)
 	{
-		int other=rand()%6;
+		int other=rand()%6;	// 6 operations
 	        if(other == 0) 
 		{
-     			if(numOfOperations_addEdge != 0)
-       			{	      
+			if(numOfOperations_addEdge != 0)
+   			{	      
 		l1:		u = (rand() % (vertexID.load()));		//vertex IDs are from 1
 				v = (rand() % (vertexID.load()));
 				if(u == v || u == 0 || v == 0)			//simple graph without self loops
 					goto l1;
 			
 //				cout << "Edge (" << u << "," << v << ") to be added." << endl;
+			
+				pthread_mutex_lock(&lock);
 
 				res = add_edge(u,v); 
-
 //				if(res == true)
 //				{
 //					cout << "Edge (" << u << "," << v << ") added." << endl;
@@ -61,62 +62,73 @@ void* pthread_call(void *t)
 //				else
 //					cout << "Edge (" << u << "," << v << ") addition failed." << endl;
 
-		         	numOfOperations_addEdge = numOfOperations_addEdge - 1;
-			        total = total - 1;
+				pthread_mutex_unlock(&lock);
+
+		         	numOfOperations_addEdge = numOfOperations_addEdge - 1;				        
+				total = total - 1;
        			}
       		}
       		else if(other == 1)
        		{
-       			if(numOfOperations_addVertex != 0)
-       			{			
-				v = vertexID.fetch_add(1);
+     			if(numOfOperations_addVertex != 0)
+        		{			
+				v = vertexID.fetch_add(1);		//vertices do not come again
 //				cout << "Vertex " << v << " to be added." << endl;
+				
+				pthread_mutex_lock(&lock);
 
 				res = add_vertex(v);
+//				print_graph();
 //				if(res == true)
 //					cout << "Vertex " << v << " added." << endl;
 //				else
 //					cout << "Vertex " << v << " addition failed." << endl;
 
+				pthread_mutex_unlock(&lock);
 			        numOfOperations_addVertex = numOfOperations_addVertex - 1;
 			        total = total - 1;
         		} 
        		} 
-		else if(other == 2)
-       		{
+	     	else if(other == 2)
+     		{
        			if(numOfOperations_removeVertex != 0)
-        		{		        
+       			{		        
 			l2:	v = rand() % (vertexID.load());		//dont decrement the total vertex count
 				if(v == 0)
 					goto l2;
-		
 //				cout << "Vertex " << v << " to be removed." << endl;
 
-				res = remove_vertex(v);
+				pthread_mutex_lock(&lock);
 
-//				if(res == true)
-//				{
-//					adjremove(v);
+				res = remove_vertex(v);
+				if(res == true)
+				{
+					adjremove(v);
 //					cout << "Vertex " << v << " removed." << endl;
 //					print_graph();
-//				}
+				}
 //				else
 //					cout << "Vertex " << v << " removal failed." << endl;
 
+				pthread_mutex_unlock(&lock);
+			
 			        numOfOperations_removeVertex = numOfOperations_removeVertex - 1;
 			        total = total - 1;
-       			}
-    		}
-	        else if(other == 3) 
+        		} 
+       		}
+		else if(other == 3)
 		{
-     			if(numOfOperations_removeEdge != 0)
-       			{	      
+			if(numOfOperations_removeEdge != 0)
+			{
 		l3:		u = (rand() % (vertexID.load()));		//vertex IDs are from 1
 				v = (rand() % (vertexID.load()));
 				if(u == v || u == 0 || v == 0)	
 					goto l3;
 			
-//				cout << "Edge (" << u << "," << v << ") to be removed." << endl;
+//				cout << "Edge (" << u << "," << v << ") to be added." << endl;
+			
+				pthread_mutex_lock(&lock);
+
 				res = remove_edge(u,v); 
 //				if(res == true)
 //				{
@@ -124,12 +136,14 @@ void* pthread_call(void *t)
 //					print_graph();
 //				}
 //				else
-//					cout << "Edge (" << u << "," << v << ") removal failed." << endl;
+//					cout << "Edge (" << u << "," << v << ") not removed." << endl;
+		
+				pthread_mutex_unlock(&lock);
 
-		         	numOfOperations_addEdge = numOfOperations_addEdge - 1;
-			        total = total - 1;
-       			}
-      		}
+		         	numOfOperations_removeEdge = numOfOperations_removeEdge - 1;				        
+				total = total - 1;
+			}
+		}
 		else if(other == 4)
 		{
 			if(numOfOperations_containsVertex != 0)
@@ -140,6 +154,8 @@ void* pthread_call(void *t)
 			
 //				cout << "Edge (" << u << "," << v << ") to be added." << endl;
 			
+				pthread_mutex_lock(&lock);
+
 				res = contains_vertex(u); 
 //				if(res == true)
 //				{
@@ -149,6 +165,8 @@ void* pthread_call(void *t)
 //				else
 //					cout << "Vertex " << u << " not found." << endl;
 		
+				pthread_mutex_unlock(&lock);
+
 		         	numOfOperations_containsVertex = numOfOperations_containsVertex - 1;				        
 				total = total - 1;
 			}
@@ -164,6 +182,8 @@ void* pthread_call(void *t)
 			
 //				cout << "Edge (" << u << "," << v << ") to be added." << endl;
 			
+				pthread_mutex_lock(&lock);
+
 				res = contains_edge(u,v); 
 //				if(res == true)
 //				{
@@ -173,6 +193,8 @@ void* pthread_call(void *t)
 //				else
 //					cout << "Edge (" << u << "," << v << ") not found." << endl;
 		
+				pthread_mutex_unlock(&lock);
+
 		         	numOfOperations_containsEdge = numOfOperations_containsEdge - 1;				        
 				total = total - 1;
 			}
@@ -196,8 +218,10 @@ int main(int argc, char*argv[])	//command line arguments - #threads, #vertices i
 	numOfOperations = atoi(argv[3]);		// number of operations each thread going to perform 1k,10k,50k,100k,1k^2
    	
 	//create initial vertices
-	vertexID.store(initial_vertices + 1);	
-	vhead = vtail = NULL;
+	pthread_mutex_init(&lock, NULL);
+	
+	vertexID.store(initial_vertices + 1);		// or +1?
+	graph = NULL;
 
 	create_initial_vertices(initial_vertices);
 
