@@ -1,6 +1,6 @@
 /*
  * File:
- *   finelock_remove_ie.cpp
+ *   finelock_not_remove_ie.cpp
  *
  * Author(s):
  *   Dr. Sathya Peri <sathya_p@iith.ac.in>
@@ -12,7 +12,7 @@
  *
  * Copyright (c) 2017.
  *
- * finelock_remove_ie.cpp is part of ConcurrentGraphDS
+ * finelock_not_remove_ie.cpp is part of ConcurrentGraphDS
 */
 
 

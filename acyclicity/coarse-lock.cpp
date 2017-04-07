@@ -20,7 +20,6 @@
 
 atomic<long long int> vertexID;
 int NTHREADS, numOfOperations;
-pthread_mutex_t lock;
 
 void* pthread_call(void *t)
 {
@@ -39,7 +38,7 @@ void* pthread_call(void *t)
 	
 	while(total != 0)
 	{
-		int other=rand()%6;	// 6 operations
+		int other=rand()%6;	
 	        if(other == 0) 
 		{
 			if(numOfOperations_addEdge != 0)
@@ -54,11 +53,25 @@ void* pthread_call(void *t)
 				pthread_mutex_lock(&lock);
 
 				res = add_edge(u,v); 
-//				if(res == true)
-//				{
+				if(res == true)
+				{
 //					cout << "Edge (" << u << "," << v << ") added." << endl;
 //					print_graph();
-//				}
+					res = cycle_detect(v, u);
+					if(res == true)
+					{
+						res = remove_edge(u,v);
+//						if(res == true)
+//							cout << "Edge (" << u << "," << v << ") removed." << endl;						
+/*						res = remove_vertex(v);
+						if(res == true)
+						{
+							adjremove(v);							
+							cout << "Vertex " << v << " removed." << endl;
+//						}
+*/					}
+//					cout << "Cycle detect Done." << endl;
+				}
 //				else
 //					cout << "Edge (" << u << "," << v << ") addition failed." << endl;
 
@@ -177,7 +190,7 @@ void* pthread_call(void *t)
 			{
 		l5:		u = (rand() % (vertexID.load()));		//vertex IDs are from 1
 				v = (rand() % (vertexID.load()));
-				if(u == v || u == 0 || v == 0)	
+				if(u == v || u == 0 || v == 0)
 					goto l5;
 			
 //				cout << "Edge (" << u << "," << v << ") to be added." << endl;
@@ -201,6 +214,55 @@ void* pthread_call(void *t)
 		}
 	} 		//end of while loop
 }
+
+NodeList* findNode(long long int key)
+{
+	NodeList *temp = graph;
+	while(temp!= NULL)
+	{
+		if(temp->listhead.key == key)
+			break;
+		temp = temp->next;
+	}
+	return temp;
+}
+
+bool DFS_visit(NodeList *temp, vector<long long int> &visited, vector<long long int> &In_stack)
+{
+	Node *newnode = temp->listhead.next;
+	visited.push_back(temp->listhead.key);
+	In_stack.push_back(temp->listhead.key);
+
+	while(newnode != NULL)
+	{
+		if(find(In_stack.begin(), In_stack.end(), newnode->key) != In_stack.end())	//found node in recursion stack
+			return true;
+		else if(find(visited.begin(), visited.end(), newnode->key) == visited.end() && DFS_visit(findNode(newnode->key), visited, In_stack) == true)
+			return true;
+		newnode = newnode->next;
+	}
+	In_stack.erase(find(In_stack.begin(), In_stack.end()+1, temp->listhead.key));
+	return false;
+}
+
+int cycle_detect()
+{						//already locked
+	vector<long long int> visited, In_stack;
+	NodeList *temp = graph;
+	bool cycle = false;
+
+	while(temp != NULL)
+	{
+		if(visited.end() == find(visited.begin(), visited.end(), temp->listhead.key))	//not visited
+		{
+			cycle = DFS_visit(temp, visited, In_stack);
+			if(cycle)
+				return true;		//dont unlock -> delete vertex
+		}
+		temp = temp->next;
+	}
+	return false;
+}   
 
 int main(int argc, char*argv[])	//command line arguments - #threads, #vertices initially, #operations per threads
 {
@@ -268,5 +330,14 @@ int main(int argc, char*argv[])	//command line arguments - #threads, #vertices i
 
     	cout << "Duration (gettimeofday() function): " << duration <<" secs."<<endl;
 
+	//sequential cycle detection
+	NodeList *temp1 = graph;
+	while(temp1 != NULL)
+	{
+		bool res = cycle_detect();
+		if(res == true)
+			cout << "CYCLE DETECTED!" << endl;
+		temp1 = temp1->next;
+	}
 	return 0;
 }
