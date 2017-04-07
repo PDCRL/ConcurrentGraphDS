@@ -7,8 +7,8 @@ Source files can be found in *src* directory.
 The subdirectory *src/data_structure* provides the source code for Graph data structure variants, as decribed below:
 1. Sequential Graph data structure
 2. Concurrent Coarse Lock Graph Data Structure
-3. Concurrent Fine Lock Graph Data Structure without deletion of incoming edges
-4. Concurrent Fine Lock Graph Data Structure with deletion of incoming edges
+3. Concurrent Fine Lock Graph Data Structure without deletion of incoming edges of deleted vertices
+4. Concurrent Fine Lock Graph Data Structure with deletion of incoming edges of deleted vertices
 
 The subdirectory *src/acyclicity* provides the source code for Graph data structure variants which maintain acyclicity, as decribed below:
 1. Sequential Graph data structure
