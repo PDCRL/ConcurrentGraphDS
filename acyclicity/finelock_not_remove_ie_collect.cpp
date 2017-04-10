@@ -16,7 +16,7 @@
 */
 
 
-#include "fine_not_remove_ie_collect.h"
+#include "finelock_not_remove_ie_collect.h"
 
 atomic<long long int> vertexID;
 int NTHREADS, numOfOperations;

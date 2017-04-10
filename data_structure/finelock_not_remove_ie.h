@@ -318,21 +318,46 @@ loop2:	while(true)
 }
 
 int add_edge(long long int u, long long int v)
-{
-	//search for vertex v
-	NodeList *temp = vhead;
+{		
+	NodeList *temp1, *temp2;
 
-	while(temp->listhead.key < v)
-		temp = temp->next;
+	if(u < v)
+	{
+		temp1 = vhead;
 
-	if(temp->listhead.key != v || temp->listhead.marked.load() == true)
-		return false;
+		while(temp1->listhead.key < u)
+			temp1 = temp1->next;
 	
-	temp = vhead;
-	while(temp->listhead.key < u)
-		temp = temp->next;
+		if(temp1->listhead.key != u || temp1->listhead.marked.load() == true)
+			return false;
+		
+		temp2 = temp1->next;
+		
+		while(temp2->listhead.key < v)
+			temp2 = temp2->next;
+	
+		if(temp2->listhead.key != v || temp2->listhead.marked.load() == true)
+			return false;
+	}
+	else
+	{
+		temp2 = vhead;
 
-	if(temp->listhead.key != u || temp->listhead.marked.load() == true)
+		while(temp2->listhead.key < v)
+			temp2 = temp2->next;
+	
+		if(temp2->listhead.key != v || temp2->listhead.marked.load() == true)
+			return false;
+		
+		temp1 = temp2->next;
+		while(temp1->listhead.key < u)
+			temp1 = temp1->next;
+	
+		if(temp1->listhead.key != u || temp1->listhead.marked.load() == true)
+			return false;
+	}
+	
+	if(temp1->listhead.marked.load() == true || temp2->listhead.marked.load() == true)
 		return false;
 
 	//found both u,v in graph - now insert edge
@@ -347,7 +372,7 @@ int add_edge(long long int u, long long int v)
 
 loop3:	while(true)
 	{
-		pred = temp->listhead.next;
+		pred = temp1->listhead.next;
 		curr = pred->next;
 		
 		while(curr->key < v)
@@ -385,20 +410,44 @@ loop3:	while(true)
 
 int remove_edge(long long int u, long long int v)
 {
-	//search for vertex v
-	NodeList *temp = vhead;
-	
-	while(temp->listhead.key < v)
-		temp = temp->next;
+	NodeList *temp1, *temp2;
 
-	if(temp->listhead.key != v || temp->listhead.marked.load() == true)
-		return false;
-	
-	temp = vhead;
-	while(temp->listhead.key < u)
-		temp = temp->next;
+	if(u < v)
+	{
+		temp1 = vhead;
 
-	if(temp->listhead.key != u || temp->listhead.marked.load() == true)
+		while(temp1->listhead.key < u)
+			temp1 = temp1->next;
+	
+		if(temp1->listhead.key != u || temp1->listhead.marked.load() == true)
+			return false;
+		
+		temp2 = temp1->next;
+		while(temp2->listhead.key < v)
+			temp2 = temp2->next;
+	
+		if(temp2->listhead.key != v || temp2->listhead.marked.load() == true)
+			return false;
+	}
+	else
+	{
+		temp2 = vhead;
+
+		while(temp2->listhead.key < v)
+			temp2 = temp2->next;
+	
+		if(temp2->listhead.key != v || temp2->listhead.marked.load() == true)
+			return false;
+		
+		temp1 = temp2->next;
+		while(temp1->listhead.key < u)
+			temp1 = temp1->next;
+	
+		if(temp1->listhead.key != u || temp1->listhead.marked.load() == true)
+			return false;
+	}
+	
+	if(temp1->listhead.marked.load() == true || temp2->listhead.marked.load() == true)
 		return false;
 
 	//found both u,v in graph - now delete edge
@@ -407,7 +456,7 @@ int remove_edge(long long int u, long long int v)
 
 loop4:	while(true)
 	{	
-		pred = temp->listhead.next;
+		pred = temp1->listhead.next;
 		curr = pred->next;
 		
 		while(curr->key < v)
