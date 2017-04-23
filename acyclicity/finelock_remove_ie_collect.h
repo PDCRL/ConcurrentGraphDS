@@ -42,14 +42,14 @@ struct Node
 	long long int key;
 	atomic<int> status;  	// 1- transit, 2 - marked, 3 - added
 	pthread_mutex_t lock;
-	Node *next;
+	atomic<Node*> next;
 };
 
 struct NodeList
 {
 	Node listhead;
 	atomic<bool> marked;
-	NodeList *next;
+	atomic<NodeList*> next;
 };
 
 NodeList *vhead, *vtail;
@@ -91,14 +91,14 @@ void print_graph()
 	while(temp1 != NULL)
 	{
 		cout << temp1->listhead.key << " ";
-		temp2 = temp1->listhead.next;
+		temp2 = temp1->listhead.next.load(std::memory_order_seq_cst);
 		while(temp2 != NULL)
 		{
 			cout << temp2->key << " ";
-			temp2 = temp2->next;
+			temp2 = temp2->next.load(std::memory_order_seq_cst);
 		}
 		cout << endl;
-		temp1 = temp1->next;
+		temp1 = temp1->next.load(std::memory_order_seq_cst);
 	}
 }
 
@@ -109,102 +109,102 @@ void create_initial_vertices(int initial_vertices)
 	Node *ehead1 = (Node*) malloc(sizeof(Node));
 
 	ehead1->key = LLONG_MIN;
-	ehead1->next = NULL;
-	ehead1->status.store(3);
+	ehead1->next.store(NULL, std::memory_order_seq_cst);
+	ehead1->status.store(3, std::memory_order_seq_cst);
 	pthread_mutex_init(&ehead1->lock, NULL);
-	ehead1->next = NULL;
+	ehead1->next.store(NULL, std::memory_order_seq_cst);
 
 	Node *etail1 = (Node*) malloc(sizeof(Node));
 
 	etail1->key = LLONG_MAX;
-	etail1->next = NULL;
-	etail1->status.store(3);
+	etail1->next.store(NULL, std::memory_order_seq_cst);
+	etail1->status.store(3, std::memory_order_seq_cst);
 	pthread_mutex_init(&etail1->lock, NULL);
-	etail1->next = NULL;
+	etail1->next.store(NULL, std::memory_order_seq_cst);
 
-	ehead1->next = etail1;
+	ehead1->next.store(etail1, std::memory_order_seq_cst);
 
 	Node *ehead2 = (Node*) malloc(sizeof(Node));
 
 	ehead2->key = LLONG_MIN;
-	ehead2->next = NULL;
+	ehead2->next.store(NULL, std::memory_order_seq_cst);
 	ehead2->status.store(3);
 	pthread_mutex_init(&ehead2->lock, NULL);
-	ehead2->next = NULL;
+	ehead2->next.store(NULL, std::memory_order_seq_cst);
 
 	Node *etail2 = (Node*) malloc(sizeof(Node));
 
 	etail2->key = LLONG_MAX;
-	etail2->next = NULL;
-	etail2->status.store(3);
+	etail2->next.store(NULL, std::memory_order_seq_cst);
+	etail2->status.store(3, std::memory_order_seq_cst);
 	pthread_mutex_init(&etail2->lock, NULL);
-	etail2->next = NULL;
+	etail2->next.store(NULL, std::memory_order_seq_cst);
 
-	ehead2->next = etail2;
+	ehead2->next.store(etail2, std::memory_order_seq_cst);
 
 	vhead = (NodeList*) malloc(sizeof(NodeList));
 
 	vhead->listhead.key = LLONG_MIN;
-	vhead->listhead.next = ehead1;
-	vhead->marked.store(false);
+	vhead->listhead.next.store(ehead1, std::memory_order_seq_cst);
+	vhead->marked.store(false, std::memory_order_seq_cst);
 	pthread_mutex_init(&vhead->listhead.lock, NULL);
-	vhead->next = NULL;
+	vhead->next.store(NULL, std::memory_order_seq_cst);
 
 	vtail = (NodeList*) malloc(sizeof(NodeList));
 
 	vtail->listhead.key = LLONG_MAX;
-	vtail->listhead.next = ehead2;
-	vtail->marked.store(false);
+	vtail->listhead.next.store(ehead2, std::memory_order_seq_cst);
+	vtail->marked.store(false, std::memory_order_seq_cst);
 	pthread_mutex_init(&vtail->listhead.lock, NULL);
-	vtail->next = NULL;
+	vtail->next.store(NULL, std::memory_order_seq_cst);
 
-	vhead->next = vtail;
+	vhead->next.store(vtail, std::memory_order_seq_cst);
 
 	for(i=1; i<=initial_vertices; i++)
 	{
 		Node *ehead = (Node*) malloc(sizeof(Node));
 
 		ehead->key = LLONG_MIN;
-		ehead->next = NULL;
-		ehead->status.store(3);
+		ehead->next.store(NULL, std::memory_order_seq_cst);
+		ehead->status.store(3, std::memory_order_seq_cst);
 		pthread_mutex_init(&ehead->lock, NULL);
-		ehead->next = NULL;
+		ehead->next.store(NULL, std::memory_order_seq_cst);
 
 		Node *etail = (Node*) malloc(sizeof(Node));
 
 		etail->key = LLONG_MAX;
-		etail->next = NULL;
-		etail->status.store(3);
+		etail->next.store(NULL, std::memory_order_seq_cst);
+		etail->status.store(3, std::memory_order_seq_cst);
 		pthread_mutex_init(&etail->lock, NULL);
-		etail->next = NULL;
+		etail->next.store(NULL, std::memory_order_seq_cst);
 
-		ehead->next = etail;
+		ehead->next.store(etail, std::memory_order_seq_cst);
 
 		NodeList *newlisthead = (NodeList*) malloc(sizeof(NodeList));
 
 		newlisthead->listhead.key = i;
-		newlisthead->listhead.next = ehead;
-		newlisthead->marked.store(false);
+		newlisthead->listhead.next.store(ehead, std::memory_order_seq_cst);
+		newlisthead->marked.store(false, std::memory_order_seq_cst);
 		pthread_mutex_init(&newlisthead->listhead.lock, NULL);
-		newlisthead->next = NULL;
+		newlisthead->next.store(NULL, std::memory_order_seq_cst);
 
 		NodeList *temp = vhead;
-		while(temp->next != vtail)
-			temp = temp->next;
+		while(temp->next.load(std::memory_order_seq_cst) != vtail)
+			temp = temp->next.load(std::memory_order_seq_cst);
 
-		temp->next = newlisthead;
-		newlisthead->next = vtail;
+		temp->next.store(newlisthead, std::memory_order_seq_cst);
+		newlisthead->next.store(vtail, std::memory_order_seq_cst);
 	}
 }
 
 bool validateList(NodeList *pred, NodeList *curr)
 {
-	return !pred->marked.load() && !curr->marked.load() && pred->next == curr;
+	return !pred->marked.load(std::memory_order_seq_cst) && !curr->marked.load(std::memory_order_seq_cst) && pred->next.load(std::memory_order_seq_cst) == curr;
 }
 
 bool validateNode(Node *pred, Node *curr)
 {
-	return (pred->status.load() == 3) && (curr->status.load() == 3) && (pred->next == curr);
+	return (pred->status.load(std::memory_order_seq_cst) == 3) && (curr->status.load(std::memory_order_seq_cst) == 3) && (pred->next.load(std::memory_order_seq_cst) == curr);
 }
 
 NodeList* collect()			//get the snapshot of the graph
@@ -216,15 +216,15 @@ NodeList* collect()			//get the snapshot of the graph
         original = vhead;
         while(original != NULL)
         {
-		if(original->marked.load() == true)		
+		if(original->marked.load(std::memory_order_seq_cst) == true)	
 			goto next1;
 
 		snap_new = (NodeList*) malloc(sizeof(NodeList));
 
 		snap_new->listhead.key = original->listhead.key;
-		snap_new->listhead.next = NULL;
-		snap_new->marked.store(false);
-		snap_new->next = NULL;            	
+		snap_new->listhead.next.store(NULL, std::memory_order_seq_cst);
+		snap_new->marked.store(false, std::memory_order_seq_cst);
+		snap_new->next.store(NULL, std::memory_order_seq_cst);            	
 		
 		if(snap_head == NULL)
             	{
@@ -233,34 +233,34 @@ NodeList* collect()			//get the snapshot of the graph
         	}
               	else
 		{
-        	    	temp_snap->next = snap_new;
+        	    	temp_snap->next.store(snap_new, std::memory_order_seq_cst);
         	    	temp_snap = snap_new;
         	}
   
 	        original_node = original->listhead.next;
         	while(original_node != NULL)
            	{
-			if(original_node->status.load() != 2)
+			if(original_node->status.load(std::memory_order_seq_cst) != 2)
 				goto next2;
 
 			new_node = (Node*) malloc(sizeof(Node));
 			new_node->key = original_node->key;
-			new_node->status.store(3);
-			new_node->next = NULL;
+			new_node->status.store(3, std::memory_order_seq_cst);
+			new_node->next.store(NULL, std::memory_order_seq_cst);
 
-            		if(temp_snap->listhead.next == NULL)	//1st node 
+            		if(temp_snap->listhead.next.load(std::memory_order_seq_cst) == NULL)	//1st node 
             		{
-		                temp_snap->listhead.next = new_node;
+		                temp_snap->listhead.next.store(new_node, std::memory_order_seq_cst);
 		                snap_node = new_node;
             		}
             		else
             		{
-              			snap_node->next = new_node;
+              			snap_node->next.store(new_node, std::memory_order_seq_cst);
               			snap_node = new_node;
           		}
-next2:         		original_node = original_node->next;
+next2:         		original_node = original_node->next.load(std::memory_order_seq_cst);
            	}
-next1:           	original = original->next;
+next1:           	original = original->next.load(std::memory_order_seq_cst);
       	}
 	return snap_head;
 }
@@ -274,13 +274,13 @@ void adjremove(long long int v)
 	{
 		loop6:	while(true)
 		{
-			pred = temp->listhead.next;
-			curr = pred->next;
+			pred = temp->listhead.next.load(std::memory_order_seq_cst);
+			curr = pred->next.load(std::memory_order_seq_cst);
 			
 			while(curr->key < v)
 			{
 				pred = curr;
-				curr = curr->next;
+				curr = curr->next.load(std::memory_order_seq_cst);
 			}
 	
 			pthread_mutex_lock(&pred->lock);
@@ -295,8 +295,8 @@ void adjremove(long long int v)
 	
 			if(curr->key == v)		//edge present
 			{
-				curr->status.store(2);
-				pred->next = curr->next;
+				curr->status.store(2, std::memory_order_seq_cst);
+				pred->next.store(curr->next, std::memory_order_seq_cst);
 				pthread_mutex_unlock(&pred->lock);
 				pthread_mutex_unlock(&curr->lock);
 				goto loop5;
@@ -309,7 +309,7 @@ void adjremove(long long int v)
 			}
 		}
 	
-loop5:		temp = temp->next;
+loop5:		temp = temp->next.load(std::memory_order_seq_cst);
 	}
 }
 int cycle_detect(long long int u, long long int v)		//is there a path from u to v?
@@ -323,9 +323,9 @@ int cycle_detect(long long int u, long long int v)		//is there a path from u to 
 
 	NodeList *temp = snapshot;
 	while(temp->listhead.key < v)
-		temp = temp->next;
+		temp = temp->next.load(std::memory_order_seq_cst);
 
-	if(temp->listhead.key != v || temp->marked.load() == true)
+	if(temp->listhead.key != v || temp->marked.load(std::memory_order_seq_cst) == true)
 		return false;
 	
 	Node *adj;
@@ -346,9 +346,9 @@ int cycle_detect(long long int u, long long int v)		//is there a path from u to 
 
 		temp = vhead;
 		while(temp->listhead.key < key)
-			temp = temp->next;
+			temp = temp->next.load(std::memory_order_seq_cst);
 
-		if(temp->listhead.key != key || temp->marked.load() == true)
+		if(temp->listhead.key != key || temp->marked.load(std::memory_order_seq_cst) == true)
 		{
 			for(iterator_type i=reach.begin(); i!=reach.end(); i++)
 				if(i->first == key)
@@ -359,10 +359,11 @@ int cycle_detect(long long int u, long long int v)		//is there a path from u to 
 			continue;
 		}
 
-		adj = temp->listhead.next;
+		adj = temp->listhead.next.load(std::memory_order_seq_cst);
+
 		while(adj != NULL)
 		{
-			if(adj->status.load() != 2 && reach.find(make_pair(adj->key, false)) == reach.end() && reach.find(make_pair(adj->key, true)) == reach.end())
+			if(adj->status.load(std::memory_order_seq_cst) != 2 && reach.find(make_pair(adj->key, false)) == reach.end() && reach.find(make_pair(adj->key, true)) == reach.end())
 				reach.insert(make_pair(adj->key, false));
 			adj = adj->next;
 		}
@@ -387,27 +388,26 @@ int add_vertex(long long int v)
 	Node *ehead = (Node*) malloc(sizeof(Node));
 
 	ehead->key = LLONG_MIN;
-	ehead->next = NULL;
-	ehead->status.store(3);
+	ehead->next.store(NULL, std::memory_order_seq_cst);
+	ehead->status.store(3, std::memory_order_seq_cst);
 	pthread_mutex_init(&ehead->lock, NULL);
-	ehead->next = NULL;
+	ehead->next.store(NULL, std::memory_order_seq_cst);
 
 	Node *etail = (Node*) malloc(sizeof(Node));
 
 	etail->key = LLONG_MAX;
-	etail->next = NULL;
-	etail->status.store(3);
+	etail->next.store(NULL, std::memory_order_seq_cst);
+	etail->status.store(3, std::memory_order_seq_cst);
 	pthread_mutex_init(&etail->lock, NULL);
-	etail->next = NULL;
+	etail->next.store(NULL, std::memory_order_seq_cst);
 
-	ehead->next = etail;
-
+	ehead->next.store(etail, std::memory_order_seq_cst);
 
 	NodeList *newlisthead = (NodeList*) malloc(sizeof(NodeList));
 	newlisthead->listhead.key = v;
-	newlisthead->listhead.next = ehead;
-	newlisthead->marked.store(false);
-	newlisthead->next = NULL;
+	newlisthead->listhead.next.store(ehead, std::memory_order_seq_cst);
+	newlisthead->marked.store(false, std::memory_order_seq_cst);
+	newlisthead->next.store(NULL, std::memory_order_seq_cst);
 	pthread_mutex_init(&newlisthead->listhead.lock, NULL);
 
 	NodeList *pred, *curr;
@@ -415,12 +415,12 @@ int add_vertex(long long int v)
 loop1:	while(true)
 	{
 		pred = vhead;
-		curr = pred->next;
+		curr = pred->next.load(std::memory_order_seq_cst);
 	
 		while(curr->listhead.key < v)
 		{
 			pred = curr;
-			curr = curr->next;
+			curr = curr->next.load(std::memory_order_seq_cst);
 		}
 
 		pthread_mutex_lock(&pred->listhead.lock);
@@ -441,8 +441,8 @@ loop1:	while(true)
 		}
 		else
 		{
-			newlisthead->next = curr;
-			pred->next = newlisthead;
+			newlisthead->next.store(curr, std::memory_order_seq_cst);
+			pred->next.store(newlisthead, std::memory_order_seq_cst);
 			pthread_mutex_unlock(&pred->listhead.lock);
 			pthread_mutex_unlock(&curr->listhead.lock);
 			return true;
@@ -457,12 +457,12 @@ int remove_vertex(long long int v)
 loop2:	while(true)
 	{
 		pred = vhead;
-		curr = pred->next;
+		curr = pred->next.load(std::memory_order_seq_cst);
 	
 		while(curr->listhead.key < v)
 		{
 			pred = curr;
-			curr = curr->next;
+			curr = curr->next.load(std::memory_order_seq_cst);
 		}
 
 		pthread_mutex_lock(&pred->listhead.lock);
@@ -478,7 +478,7 @@ loop2:	while(true)
 		if(curr->listhead.key == v)
 		{
 			curr->marked.store(true);
-			pred->next = curr->next;
+			pred->next.store(curr->next, std::memory_order_seq_cst);
 			pthread_mutex_unlock(&pred->listhead.lock);
 			pthread_mutex_unlock(&curr->listhead.lock);
 			return true;
@@ -502,17 +502,17 @@ int add_edge(long long int u, long long int v)
 		temp1 = vhead;
 
 		while(temp1->listhead.key < u)
-			temp1 = temp1->next;
+			temp1 = temp1->next.load(std::memory_order_seq_cst);
 	
-		if(temp1->listhead.key != u || temp1->marked.load() == true)
+		if(temp1->listhead.key != u || temp1->marked.load(std::memory_order_seq_cst) == true)
 			return false;
 		
-		temp2 = temp1->next;
+		temp2 = temp1->next.load(std::memory_order_seq_cst);
 		
 		while(temp2->listhead.key < v)
-			temp2 = temp2->next;
+			temp2 = temp2->next.load(std::memory_order_seq_cst);
 	
-		if(temp2->listhead.key != v || temp2->marked.load() == true)
+		if(temp2->listhead.key != v || temp2->marked.load(std::memory_order_seq_cst) == true)
 			return false;
 	}
 	else
@@ -520,27 +520,27 @@ int add_edge(long long int u, long long int v)
 		temp2 = vhead;
 
 		while(temp2->listhead.key < v)
-			temp2 = temp2->next;
+			temp2 = temp2->next.load(std::memory_order_seq_cst);
 	
-		if(temp2->listhead.key != v || temp2->marked.load() == true)
+		if(temp2->listhead.key != v || temp2->marked.load(std::memory_order_seq_cst) == true)
 			return false;
 		
 		temp1 = temp2->next;
 		while(temp1->listhead.key < u)
-			temp1 = temp1->next;
+			temp1 = temp1->next.load(std::memory_order_seq_cst);
 	
-		if(temp1->listhead.key != u || temp1->marked.load() == true)
+		if(temp1->listhead.key != u || temp1->marked.load(std::memory_order_seq_cst) == true)
 			return false;
 	}
 	
-	if(temp1->marked.load() == true || temp2->marked.load() == true)
+	if(temp1->marked.load(std::memory_order_seq_cst) == true || temp2->marked.load(std::memory_order_seq_cst) == true)
 		return false;
 
 	//found both u,v in graph - now insert edge
 			
 	Node *newnode = (Node*) malloc(sizeof(Node));
 	newnode->key = v;
-	newnode->next = NULL;
+	newnode->next.store(NULL, std::memory_order_seq_cst);
 	newnode->status.store(1);
 	pthread_mutex_init(&newnode->lock, NULL);
 
@@ -548,19 +548,19 @@ int add_edge(long long int u, long long int v)
 
 loop3:	while(true)
 	{
-		pred = temp1->listhead.next;
-		curr = pred->next;
+		pred = temp1->listhead.next.load(std::memory_order_seq_cst);
+		curr = pred->next.load(std::memory_order_seq_cst);
 		
 		while(curr->key < v)
 		{
 			pred = curr;
-			curr = curr->next;
+			curr = curr->next.load(std::memory_order_seq_cst);
 		}
 
 		pthread_mutex_lock(&pred->lock);
 		pthread_mutex_lock(&curr->lock);
 
-		if(validateNode(pred,curr) == false)
+		if(validateNode(pred, curr) == false)
 		{
 			pthread_mutex_unlock(&pred->lock);
 			pthread_mutex_unlock(&curr->lock);
@@ -575,17 +575,19 @@ loop3:	while(true)
 		}
 		else
 		{
-			newnode->next = curr;
-			pred->next = newnode;
-			res = cycle_detect(v,u);
+			newnode->next.store(curr, std::memory_order_seq_cst);
+			pred->next.store(newnode, std::memory_order_seq_cst);
+
+			res = cycle_detect(v, u);
+
 			if(res == true)
 			{
-				newnode->status.store(2);
-				pred->next = curr;
+				newnode->status.store(2, std::memory_order_seq_cst);
+				pred->next.store(curr, std::memory_order_seq_cst);
 			}
 			else
 			{
-				newnode->status.store(3);
+				newnode->status.store(3, std::memory_order_seq_cst);
 			}
 			pthread_mutex_unlock(&pred->lock);
 			pthread_mutex_unlock(&curr->lock);
@@ -603,17 +605,17 @@ int remove_edge(long long int u, long long int v)
 		temp1 = vhead;
 
 		while(temp1->listhead.key < u)
-			temp1 = temp1->next;
+			temp1 = temp1->next.load(std::memory_order_seq_cst);
 	
-		if(temp1->listhead.key != u || temp1->marked.load() == true)
+		if(temp1->listhead.key != u || temp1->marked.load(std::memory_order_seq_cst) == true)
 			return false;
 		
-		temp2 = temp1->next;
+		temp2 = temp1->next.load(std::memory_order_seq_cst);
 		
 		while(temp2->listhead.key < v)
-			temp2 = temp2->next;
+			temp2 = temp2->next.load(std::memory_order_seq_cst);
 	
-		if(temp2->listhead.key != v || temp2->marked.load() == true)
+		if(temp2->listhead.key != v || temp2->marked.load(std::memory_order_seq_cst) == true)
 			return false;
 	}
 	else
@@ -621,20 +623,21 @@ int remove_edge(long long int u, long long int v)
 		temp2 = vhead;
 
 		while(temp2->listhead.key < v)
-			temp2 = temp2->next;
+			temp2 = temp2->next.load(std::memory_order_seq_cst);
 	
-		if(temp2->listhead.key != v || temp2->marked.load() == true)
+		if(temp2->listhead.key != v || temp2->marked.load(std::memory_order_seq_cst) == true)
 			return false;
 		
-		temp1 = temp2->next;
+		temp1 = temp2->next.load(std::memory_order_seq_cst);
+
 		while(temp1->listhead.key < u)
-			temp1 = temp1->next;
+			temp1 = temp1->next.load(std::memory_order_seq_cst);
 	
-		if(temp1->listhead.key != u || temp1->marked.load() == true)
+		if(temp1->listhead.key != u || temp1->marked.load(std::memory_order_seq_cst) == true)
 			return false;
 	}
 	
-	if(temp1->listhead.marked.load() == true || temp2->marked.load() == true)
+	if(temp1->marked.load(std::memory_order_seq_cst) == true || temp2->marked.load(std::memory_order_seq_cst) == true)
 		return false;
 
 	//found both u,v in graph - now delete edge
@@ -643,13 +646,13 @@ int remove_edge(long long int u, long long int v)
 
 loop4:	while(true)
 	{	
-		pred = temp1->listhead.next;
-		curr = pred->next;
+		pred = temp1->listhead.next.load(std::memory_order_seq_cst);
+		curr = pred->next.load(std::memory_order_seq_cst);
 		
 		while(curr->key < v)
 		{
 			pred = curr;
-			curr = curr->next;
+			curr = curr->next.load(std::memory_order_seq_cst);
 		}
 
 		pthread_mutex_lock(&pred->lock);
@@ -664,8 +667,8 @@ loop4:	while(true)
 
 		if(curr->key == v)		//edge present
 		{
-			curr->status.store(2);
-			pred->next = curr->next;
+			curr->status.store(2, std::memory_order_seq_cst);
+			pred->next.store(curr->next, std::memory_order_seq_cst);
 			pthread_mutex_unlock(&pred->lock);
 			pthread_mutex_unlock(&curr->lock);
 			return true;
@@ -685,9 +688,9 @@ int contains_vertex(long long int u)
 	NodeList *temp = vhead;
 	
 	while(temp->listhead.key < u)
-		temp = temp->next;
+		temp = temp->next.load(std::memory_order_seq_cst);
 
-	if(temp->listhead.key != u || temp->marked.load() == true)
+	if(temp->listhead.key != u || temp->marked.load(std::memory_order_seq_cst) == true)
 		return false;
 
 	return true;
@@ -700,24 +703,24 @@ int contains_edge(long long int u, long long int v)
 	NodeList *temp = vhead;
 	
 	while(temp->listhead.key < v)
-		temp = temp->next;
+		temp = temp->next.load(std::memory_order_seq_cst);
 
-	if(temp->listhead.key != v || temp->marked.load() == true)
+	if(temp->listhead.key != v || temp->marked.load(std::memory_order_seq_cst) == true)
 		return false;
 
 	temp = vhead;
 	while(temp->listhead.key < u)
-		temp = temp->next;
+		temp = temp->next.load(std::memory_order_seq_cst);
 
-	if(temp->listhead.key != u || temp->marked.load() == true)
+	if(temp->listhead.key != u || temp->marked.load(std::memory_order_seq_cst) == true)
 		return false;
 
-	Node *pred = temp->listhead.next;
+	Node *pred = temp->listhead.next.load(std::memory_order_seq_cst);
 
 	while(pred->key < v)
-		pred = pred->next;
+		pred = pred->next.load(std::memory_order_seq_cst);
 
-	if(pred->key != v || pred->status.load() != 3)		//edge present
+	if(pred->key != v || pred->status.load(std::memory_order_seq_cst) != 3)		//edge present
 		return false;
 
 	return true;
