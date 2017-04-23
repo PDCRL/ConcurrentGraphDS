@@ -54,25 +54,12 @@ void* pthread_call(void *t)
 //				cout << "Edge (" << u << "," << v << ") to be added." << endl;
 			
 				res = add_edge(u,v); 
-				if(res == true)
-				{
+
+//				if(res == true)
+//				{
 //					cout << "Edge (" << u << "," << v << ") added." << endl;
 //					print_graph();
-					res = cycle_detect(v,u);
-					if(res == true)
-					{
-						res = remove_edge(u,v);
-//						if(res == true)
-//							cout << "Edge (" << u << "," << v << ") removed." << endl;						
-/*						res = remove_vertex(v);
-						if(res == true)
-						{
-							adjremove(v);							
-							cout << "Vertex " << v << " removed." << endl;
-//						}
-*/					}
-//					cout << "Cycle detect Done." << endl;
-				}
+//				}
 //				else
 //					cout << "Edge (" << u << "," << v << ") addition failed." << endl;
 
