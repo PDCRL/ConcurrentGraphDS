@@ -612,15 +612,15 @@ loop5:				while(true)
 						pthread_mutex_unlock(&new_curr->lock);
 						goto loop5;
 					}
-				}
-				
-				newnode->status.store(2, std::memory_order_seq_cst);
-				new_pred->next.store(curr, std::memory_order_seq_cst);
-		
-				pthread_mutex_unlock(&new_pred->lock);
-				pthread_mutex_unlock(&new_curr->lock);
 
-				return false;
+					newnode->status.store(2, std::memory_order_seq_cst);
+					new_pred->next.store(curr, std::memory_order_seq_cst);
+		
+					pthread_mutex_unlock(&new_pred->lock);
+					pthread_mutex_unlock(&new_curr->lock);
+
+					return false;
+				}
 			}
 			else
 			{

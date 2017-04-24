@@ -492,6 +492,11 @@ loop2:	while(true)
 	}
 }
 
+bool NewValidateNode(Node *pred, Node *curr)
+{
+	return (pred->status.load(std::memory_order_seq_cst) != 2) && (pred->next.load(std::memory_order_seq_cst) == curr);
+}
+
 int add_edge(long long int u, long long int v)
 {
 	bool res;
@@ -544,7 +549,7 @@ int add_edge(long long int u, long long int v)
 	newnode->status.store(1);
 	pthread_mutex_init(&newnode->lock, NULL);
 
-	Node *pred, *curr;
+	Node *pred, *curr, *new_pred, *new_curr;
 
 loop3:	while(true)
 	{
@@ -578,20 +583,48 @@ loop3:	while(true)
 			newnode->next.store(curr, std::memory_order_seq_cst);
 			pred->next.store(newnode, std::memory_order_seq_cst);
 
+			pthread_mutex_unlock(&pred->lock);
+			pthread_mutex_unlock(&curr->lock);
+
 			res = cycle_detect(v, u);
 
 			if(res == true)
 			{
-				newnode->status.store(2, std::memory_order_seq_cst);
-				pred->next.store(curr, std::memory_order_seq_cst);
+loop7:				while(true)
+				{
+					new_pred = temp1->listhead.next.load(std::memory_order_seq_cst);
+					new_curr = pred->next.load(std::memory_order_seq_cst);
+		
+					while(new_curr->key < v)
+					{
+						new_pred = new_curr;
+						new_curr = new_curr->next.load(std::memory_order_seq_cst);
+					}
+
+					pthread_mutex_lock(&new_pred->lock);
+					pthread_mutex_lock(&new_curr->lock);
+
+					if(NewValidateNode(new_pred, new_curr) == false)
+					{
+						pthread_mutex_unlock(&new_pred->lock);
+						pthread_mutex_unlock(&new_curr->lock);
+						goto loop7;
+					}
+	
+					newnode->status.store(2, std::memory_order_seq_cst);
+					new_pred->next.store(curr, std::memory_order_seq_cst);
+		
+					pthread_mutex_unlock(&new_pred->lock);
+					pthread_mutex_unlock(&new_curr->lock);
+
+					return false;
+				}
 			}
 			else
 			{
 				newnode->status.store(3, std::memory_order_seq_cst);
+				return true;
 			}
-			pthread_mutex_unlock(&pred->lock);
-			pthread_mutex_unlock(&curr->lock);
-			return true;
 		}
 	}
 }
