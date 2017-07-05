@@ -17,6 +17,7 @@
 
 
 #include <stdio.h>
+#include <assert.h>
 #include <iostream>
 #include <pthread.h>
 #include <stdlib.h>

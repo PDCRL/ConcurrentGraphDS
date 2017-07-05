@@ -202,14 +202,19 @@ bool validateList(NodeList *pred, NodeList *curr)
 	return !pred->marked.load(std::memory_order_seq_cst) && !curr->marked.load(std::memory_order_seq_cst) && pred->next.load(std::memory_order_seq_cst) == curr;
 }
 
-bool validateNode(Node *pred, Node *curr)
+bool validateNode1(Node *pred, Node *curr)
 {
 	return (pred->status.load(std::memory_order_seq_cst) == 3) && (curr->status.load(std::memory_order_seq_cst) == 3) && (pred->next.load(std::memory_order_seq_cst) == curr);
 }
 
+bool validateNode2(Node *pred, Node *curr)
+{
+	return (pred->status.load(std::memory_order_seq_cst) != 2) && (curr->status.load(std::memory_order_seq_cst) != 2) && (pred->next.load(std::memory_order_seq_cst) == curr);
+}
+
 void adjremove(long long int v)
 {
-	NodeList *temp = vhead;
+	NodeList *temp = vhead->next;
 	Node *pred, *curr;
 
 	while(temp != NULL)
@@ -228,7 +233,7 @@ void adjremove(long long int v)
 			pthread_mutex_lock(&pred->lock);
 			pthread_mutex_lock(&curr->lock);
 	
-			if(validateNode(pred,curr) == false)
+			if(validateNode1(pred,curr) == false)
 			{
 				pthread_mutex_unlock(&pred->lock);
 				pthread_mutex_unlock(&curr->lock);
@@ -260,7 +265,7 @@ int cycle_detect(long long int u, long long int v)		//is there a path from u to 
 	typedef set<pair<long long int, bool>>::iterator iterator_type;
 	long long int key;
 
-	NodeList *temp = vhead;
+	NodeList *temp = vhead->next;
 	while(temp->listhead.key < v)
 		temp = temp->next.load(std::memory_order_seq_cst);
 
@@ -282,7 +287,7 @@ int cycle_detect(long long int u, long long int v)		//is there a path from u to 
 
 		key = i->first;
 
-		temp = vhead;
+		temp = vhead->next;
 		while(temp->listhead.key < key)
 			temp = temp->next.load(std::memory_order_seq_cst);
 
@@ -430,11 +435,6 @@ loop2:	while(true)
 	}
 }
 
-bool NewValidateNode(Node *pred, Node *curr)
-{
-	return (pred->status.load(std::memory_order_seq_cst) != 2) && (pred->next.load(std::memory_order_seq_cst) == curr);
-}
-
 int add_edge(long long int u, long long int v)
 {
 	bool res;
@@ -503,7 +503,7 @@ loop3:	while(true)
 		pthread_mutex_lock(&pred->lock);
 		pthread_mutex_lock(&curr->lock);
 
-		if(validateNode(pred,curr) == false)
+		if(validateNode2(pred,curr) == false)
 		{
 			pthread_mutex_unlock(&pred->lock);
 			pthread_mutex_unlock(&curr->lock);
@@ -531,7 +531,7 @@ loop3:	while(true)
 loop7:				while(true)
 				{
 					new_pred = temp1->listhead.next.load(std::memory_order_seq_cst);
-					new_curr = pred->next.load(std::memory_order_seq_cst);
+					new_curr = new_pred->next.load(std::memory_order_seq_cst);
 		
 					while(new_curr->key < v)
 					{
@@ -542,7 +542,7 @@ loop7:				while(true)
 					pthread_mutex_lock(&new_pred->lock);
 					pthread_mutex_lock(&new_curr->lock);
 
-					if(NewValidateNode(new_pred, new_curr) == false)
+					if(validateNode2(new_pred, new_curr) == false)
 					{
 						pthread_mutex_unlock(&new_pred->lock);
 						pthread_mutex_unlock(&new_curr->lock);
@@ -550,7 +550,7 @@ loop7:				while(true)
 					}
 		
 					newnode->status.store(2, std::memory_order_seq_cst);
-					new_pred->next.store(curr, std::memory_order_seq_cst);
+					new_pred->next.store(new_curr->next, std::memory_order_seq_cst);
 		
 					pthread_mutex_unlock(&new_pred->lock);
 					pthread_mutex_unlock(&new_curr->lock);
@@ -629,7 +629,7 @@ loop4:	while(true)
 		pthread_mutex_lock(&pred->lock);
 		pthread_mutex_lock(&curr->lock);
 
-		if(validateNode(pred,curr) == false)
+		if(validateNode1(pred,curr) == false)
 		{
 			pthread_mutex_unlock(&pred->lock);
 			pthread_mutex_unlock(&curr->lock);

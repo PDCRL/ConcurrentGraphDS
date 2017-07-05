@@ -44,7 +44,7 @@ void* pthread_call(void *t)
 		int other=rand()%6;
 	        if(other == 0) 
 		{
-     			if(numOfOperations_addEdge != 0)
+     			if(numOfOperations_addEdge >= 0)
        			{	      
 		l1:		u = (rand() % (vertexID.load()));		//vertex IDs are from 1
 				v = (rand() % (vertexID.load()));
@@ -69,7 +69,7 @@ void* pthread_call(void *t)
       		}
       		else if(other == 1)
        		{
-       			if(numOfOperations_addVertex != 0)
+       			if(numOfOperations_addVertex >= 0)
        			{			
 				v = vertexID.fetch_add(1);
 //				cout << "Vertex " << v << " to be added." << endl;
@@ -86,7 +86,7 @@ void* pthread_call(void *t)
        		} 
 		else if(other == 2)
        		{
-       			if(numOfOperations_removeVertex != 0)
+       			if(numOfOperations_removeVertex >= 0)
         		{		        
 			l2:	v = rand() % (vertexID.load());		//dont decrement the total vertex count
 				if(v == 0)
@@ -111,7 +111,7 @@ void* pthread_call(void *t)
     		}
 	        else if(other == 3) 
 		{
-     			if(numOfOperations_removeEdge != 0)
+     			if(numOfOperations_removeEdge >= 0)
        			{	      
 		l3:		u = (rand() % (vertexID.load()));		//vertex IDs are from 1
 				v = (rand() % (vertexID.load()));
@@ -134,7 +134,7 @@ void* pthread_call(void *t)
       		}
 		else if(other == 4)
 		{
-			if(numOfOperations_containsVertex != 0)
+			if(numOfOperations_containsVertex >= 0)
 			{
 		l4:		u = (rand() % (vertexID.load()));		//vertex IDs are from 1
 				if(u == 0)		
@@ -157,7 +157,7 @@ void* pthread_call(void *t)
 		}
 		else if(other == 5)
 		{
-			if(numOfOperations_containsEdge != 0)
+			if(numOfOperations_containsEdge >= 0)
 			{
 		l5:		u = (rand() % (vertexID.load()));		//vertex IDs are from 1
 				v = (rand() % (vertexID.load()));
@@ -180,6 +180,62 @@ void* pthread_call(void *t)
 			}
 		}
 	} 		//end of while loop
+}
+
+NodeList* findNode(long long int key)
+{
+	NodeList *temp = vhead;
+	while(temp!= NULL)
+	{
+		if(temp->listhead.key == key)
+			break;
+		temp = temp->next;
+	}
+	return temp;
+}
+
+bool DFS_visit(NodeList *temp, vector<long long int> &visited, vector<long long int> &In_stack)
+{
+	if(temp == NULL)
+		return false;
+
+	Node *newnode = temp->listhead.next;
+	newnode = newnode->next;
+
+	if(visited.end() == find(visited.begin(), visited.end(), temp->listhead.key))	//not visited
+	{
+		visited.push_back(temp->listhead.key);
+		In_stack.push_back(temp->listhead.key);
+
+		while(newnode->key != LLONG_MAX)
+		{
+			if(find(In_stack.begin(), In_stack.end(), newnode->key) != In_stack.end())	//found node in recursion stack
+				return true;
+			else if(find(visited.begin(), visited.end(), newnode->key) == visited.end() && DFS_visit(findNode(newnode->key), visited, In_stack) == true)
+				return true;
+			newnode = newnode->next;
+		}
+	}
+	std::vector<long long int>::iterator it = find(In_stack.begin(), In_stack.end(), temp->listhead.key);
+	if(it != In_stack.end())
+		In_stack.erase(it);
+	return false;
+}
+
+int cycle_detect()
+{						//already locked
+	vector<long long int> visited, In_stack;
+	NodeList *temp = vhead->next;
+	bool cycle = false;
+
+	while(temp != vtail)
+	{
+		cycle = DFS_visit(temp, visited, In_stack);
+		if(cycle)
+			return true;	
+		temp = temp->next;
+	}
+	return false;
 }
 
 int main(int argc, char*argv[])	//command line arguments - #threads, #vertices initially, #operations per threads
@@ -245,6 +301,11 @@ int main(int argc, char*argv[])	//command line arguments - #threads, #vertices i
 	duration = (double) difference->secs + ((double)difference->usecs / (double)temp);
 
     	cout << "Duration (gettimeofday() function): " << duration <<" secs."<<endl;
+
+	//sequential cycle detection
+	bool res = cycle_detect();
+	if(res == true)
+		cout << "CYCLE DETECTED!" << endl;
 
 	return 0;
 }

@@ -244,5 +244,20 @@ int main(int argc, char*argv[])	//command line arguments - #threads, #vertices i
 
     	cout << "Duration (gettimeofday() function): " << duration <<" secs."<<endl;
 
+	NodeList *temp1 = vhead->next;
+	while(temp1->next != vtail)
+	{
+		NodeList *temp2 = temp1->next;
+		assert(temp1->listhead.key < temp2->listhead.key);
+
+		Node *temp3 = temp1->listhead.next;
+		while(temp3->next != NULL)
+		{
+			Node *temp4 = temp3->next;
+			assert(temp3->key < temp4->key);
+			temp3 = temp3->next;
+		}
+		temp1 = temp1->next;
+	}
 	return 0;
 }
