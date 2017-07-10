@@ -18,6 +18,7 @@
 
 #include <stdio.h>
 #include <iostream>
+#include <assert.h>
 #include <stdlib.h>
 #include <list>
 #include <vector>
@@ -99,7 +100,7 @@ void print_graph()
 
 void create_initial_vertices(int initial_vertices)
 {
-	int i;
+	int i, j;
 	for(i=1;i<=initial_vertices;i++)
 	{
 		NodeList *newlisthead = (NodeList*) malloc(sizeof(NodeList));
@@ -108,15 +109,31 @@ void create_initial_vertices(int initial_vertices)
 		newlisthead->listhead.next = NULL;
 		newlisthead->next = NULL;
 		if(i==1)
-		{
 			graph = newlisthead;
-		}
 		else
 		{
 			NodeList *temp = graph;
 			while(temp->next != NULL)
 				temp = temp->next;
 			temp->next = newlisthead;
+		}
+
+		for(j=1;j<=initial_vertices;j++)
+		{
+			if(i == j)
+				continue;	//avoid self loops
+			Node *newnode = (Node*) malloc(sizeof(Node));
+			newnode->key = j;
+			newnode->next = NULL;
+			if(newlisthead->next == NULL)
+				newlisthead->listhead.next = newnode;
+			else
+			{
+				Node *temp = newlisthead->listhead.next;
+				while(temp->next != NULL)
+					temp = temp->next;
+				temp->next = newnode;
+			}
 		}
 	}
 }
@@ -280,6 +297,13 @@ int add_edge(long long int u, long long int v)
 
 	if(pred->key == v)		//edge already present
 		return true;
+
+	if(pred->key > v)
+	{
+		temp->listhead.next = newnode;
+		newnode->next = pred;
+		return true;
+	}
 
 	if(pred->next == NULL)
 	{

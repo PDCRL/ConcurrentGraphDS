@@ -37,12 +37,12 @@ void* pthread_call(void *t)
 
 	int total = numOfOperations_addEdge + numOfOperations_addVertex + numOfOperations_removeVertex + numOfOperations_removeEdge + numOfOperations_containsVertex + numOfOperations_containsEdge; 
 	
-	while(total != 0)
+	while(total > 0)
 	{
 		int other=rand()%6;	// 6 operations
 	        if(other == 0) 
 		{
-			if(numOfOperations_addEdge != 0)
+			if(numOfOperations_addEdge > 0)
    			{	      
 		l1:		u = (rand() % (vertexID.load()));		//vertex IDs are from 1
 				v = (rand() % (vertexID.load()));
@@ -70,7 +70,7 @@ void* pthread_call(void *t)
       		}
       		else if(other == 1)
        		{
-     			if(numOfOperations_addVertex != 0)
+     			if(numOfOperations_addVertex > 0)
         		{			
 				v = vertexID.fetch_add(1);		//vertices do not come again
 //				cout << "Vertex " << v << " to be added." << endl;
@@ -91,7 +91,7 @@ void* pthread_call(void *t)
        		} 
 	     	else if(other == 2)
      		{
-       			if(numOfOperations_removeVertex != 0)
+       			if(numOfOperations_removeVertex > 0)
        			{		        
 			l2:	v = rand() % (vertexID.load());		//dont decrement the total vertex count
 				if(v == 0)
@@ -118,7 +118,7 @@ void* pthread_call(void *t)
        		}
 		else if(other == 3)
 		{
-			if(numOfOperations_removeEdge != 0)
+			if(numOfOperations_removeEdge > 0)
 			{
 		l3:		u = (rand() % (vertexID.load()));		//vertex IDs are from 1
 				v = (rand() % (vertexID.load()));
@@ -146,7 +146,7 @@ void* pthread_call(void *t)
 		}
 		else if(other == 4)
 		{
-			if(numOfOperations_containsVertex != 0)
+			if(numOfOperations_containsVertex > 0)
 			{
 		l4:		u = (rand() % (vertexID.load()));		//vertex IDs are from 1
 				if(u == 0)	
@@ -173,7 +173,7 @@ void* pthread_call(void *t)
 		}
 		else if(other == 5)
 		{
-			if(numOfOperations_containsEdge != 0)
+			if(numOfOperations_containsEdge > 0)
 			{
 		l5:		u = (rand() % (vertexID.load()));		//vertex IDs are from 1
 				v = (rand() % (vertexID.load()));
@@ -224,7 +224,7 @@ int main(int argc, char*argv[])	//command line arguments - #threads, #vertices i
 	graph = NULL;
 
 	create_initial_vertices(initial_vertices);
-
+//	print_graph();
 	cout << "Number of Threads: " << NTHREADS << endl;
 	cout << "Initial graph with " << initial_vertices << " created." << endl;
 
@@ -267,6 +267,27 @@ int main(int argc, char*argv[])	//command line arguments - #threads, #vertices i
 	duration = (double) difference->secs + ((double)difference->usecs / (double)temp);
 
     	cout << "Duration (gettimeofday() function): " << duration <<" secs."<<endl;
+
+	NodeList *temp1 = graph;
+	while(temp1->next != NULL)
+	{
+		NodeList *temp2 = temp1->next;
+		assert(temp1->listhead.key < temp2->listhead.key);
+
+		if(temp1->listhead.next == NULL)
+		{
+			temp1 = temp1->next;
+			continue;
+		}
+		Node *temp3 = temp1->listhead.next;
+		while(temp3->next != NULL)
+		{
+			Node *temp4 = temp3->next;
+			assert(temp3->key < temp4->key);
+			temp3 = temp3->next;
+		}
+		temp1 = temp1->next;
+	}
 
 	return 0;
 }

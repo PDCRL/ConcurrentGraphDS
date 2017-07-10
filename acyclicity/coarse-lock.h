@@ -17,6 +17,7 @@
 
 #include <stdio.h>
 #include <iostream>
+#include <assert.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <list>
@@ -80,81 +81,6 @@ TIME_DIFF * my_difftime (struct timeval * start, struct timeval * end)
 	        }
 	}
         return diff;
-}
-
-void print_graph()
-{
-	NodeList *temp1 = graph;
-	Node *temp2;
-
-	while(temp1 != NULL)
-	{
-		cout << temp1->listhead.key << " ";
-		temp2 = temp1->listhead.next;
-		while(temp2 != NULL)
-		{
-			cout << temp2->key << " ";
-			temp2 = temp2->next;
-		}
-		cout << endl;
-		temp1 = temp1->next;
-	}
-}
-
-void create_initial_vertices(int initial_vertices)
-{
-	int i;
-	for(i=1;i<=initial_vertices;i++)
-	{
-		NodeList *newlisthead = (NodeList*) malloc(sizeof(NodeList));
-
-		newlisthead->listhead.key = i;
-		newlisthead->listhead.next = NULL;
-		newlisthead->next = NULL;
-		if(i==1)
-		{
-			graph = newlisthead;
-		}
-		else
-		{
-			NodeList *temp = graph;
-			while(temp->next != NULL)
-				temp = temp->next;
-			temp->next = newlisthead;
-		}
-	}
-}
-
-void adjremove(long long int key)
-{
-	NodeList *temp = graph;
-	Node *pred, *curr;
-	while(temp != NULL)
-	{
-		pred = temp->listhead.next;
-		if(pred == NULL)
-			goto l3;
-		if(pred->key == key)
-		{
-			temp->listhead.next = temp->listhead.next->next;
-			goto l3;
-		}
-		if(pred->next == NULL)
-			goto l3;
-
-		curr = pred->next;
-
-		while(curr->key < key && curr->next != NULL)
-		{
-			pred = pred->next;
-			curr = curr->next;
-		}
-		
-		if(curr->key == key)
-			pred->next = curr->next;
-
-l3:		temp = temp->next;
-	}
 }
 
 int cycle_detect(long long int u, long long int v)		//is there a path from u to v?
@@ -221,6 +147,99 @@ int cycle_detect(long long int u, long long int v)		//is there a path from u to 
 		reach.insert(make_pair(key, true));		//mark as visited
 	}	
 	return false;		//no cycle
+}
+
+void print_graph()
+{
+	NodeList *temp1 = graph;
+	Node *temp2;
+
+	while(temp1 != NULL)
+	{
+		cout << temp1->listhead.key << " ";
+		temp2 = temp1->listhead.next;
+		while(temp2 != NULL)
+		{
+			cout << temp2->key << " ";
+			temp2 = temp2->next;
+		}
+		cout << endl;
+		temp1 = temp1->next;
+	}
+}
+
+void create_initial_vertices(int initial_vertices)
+{
+	int i, j;
+	for(i=1;i<=initial_vertices;i++)
+	{
+		NodeList *newlisthead = (NodeList*) malloc(sizeof(NodeList));
+
+		newlisthead->listhead.key = i;
+		newlisthead->listhead.next = NULL;
+		newlisthead->next = NULL;
+		if(i==1)
+			graph = newlisthead;
+		else
+		{
+			NodeList *temp = graph;
+			while(temp->next != NULL)
+				temp = temp->next;
+			temp->next = newlisthead;
+		}
+
+		for(j=1;j<=initial_vertices;j++)
+		{
+			if(i == j)
+				continue;	//avoid self loops
+			Node *newnode = (Node*) malloc(sizeof(Node));
+			newnode->key = j;
+			newnode->next = NULL;
+			if(newlisthead->next == NULL)
+				newlisthead->listhead.next = newnode;
+			else
+			{
+				Node *temp = newlisthead->listhead.next;
+				while(temp->next != NULL)
+					temp = temp->next;
+				temp->next = newnode;
+				if(cycle_detect(j,i))
+					temp->next = NULL;
+			}
+		}
+	}
+}
+
+void adjremove(long long int key)
+{
+	NodeList *temp = graph;
+	Node *pred, *curr;
+	while(temp != NULL)
+	{
+		pred = temp->listhead.next;
+		if(pred == NULL)
+			goto l3;
+		if(pred->key == key)
+		{
+			temp->listhead.next = temp->listhead.next->next;
+			goto l3;
+		}
+		if(pred->next == NULL)
+			goto l3;
+
+		curr = pred->next;
+
+		while(curr->key < key && curr->next != NULL)
+		{
+			pred = pred->next;
+			curr = curr->next;
+		}
+		
+		if(curr->key == key)
+			pred->next = curr->next;
+
+l3:		temp = temp->next;
+	}
 }
 
 int add_vertex(long long int v)
@@ -349,6 +368,13 @@ int add_edge(long long int u, long long int v)
 
 	if(pred->key == v)		//edge already present
 		return true;
+
+	if(pred->key > v)
+	{
+		temp->listhead.next = newnode;
+		newnode->next = pred;
+		return true;
+	}
 
 	if(pred->next == NULL)
 	{
