@@ -190,7 +190,7 @@ void create_initial_vertices(int initial_vertices)
 		temp->next.store(newlisthead, std::memory_order_seq_cst);
 		newlisthead->next.store(vtail, std::memory_order_seq_cst);
 
-		for(j=1;j<=initial_vertices;j++)
+		for(j=i+1;j<=initial_vertices;j++)
 		{
 			if(i == j)
 				continue;	//avoid self loops
