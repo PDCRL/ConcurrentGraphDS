@@ -256,7 +256,9 @@ int main(int argc, char*argv[])	//command line arguments - #threads, #vertices i
 	vertexID.store(initial_vertices + 1);	
 	vhead = vtail = NULL;
 
-	create_initial_vertices(initial_vertices);
+//	create_initial_vertices(initial_vertices);
+
+	input(initial_vertices);
 
 	cout << "Number of Threads: " << NTHREADS << endl;
 	cout << "Initial graph with " << initial_vertices << " created." << endl;

@@ -170,6 +170,122 @@ void print_graph()
 	}
 }
 
+void input (int initial_vertices)
+{
+	int i, j;
+
+	Node *ehead1 = (Node*) malloc(sizeof(Node));
+
+	ehead1->key = LLONG_MIN;
+	ehead1->next.store(NULL, std::memory_order_seq_cst);
+	ehead1->status.store(3, std::memory_order_seq_cst);
+	pthread_mutex_init(&ehead1->lock, NULL);
+
+	Node *etail1 = (Node*) malloc(sizeof(Node));
+
+	etail1->key = LLONG_MAX;
+	etail1->next.store(NULL, std::memory_order_seq_cst);
+	etail1->status.store(3, std::memory_order_seq_cst);
+	pthread_mutex_init(&etail1->lock, NULL);
+
+	ehead1->next.store(etail1, std::memory_order_seq_cst);
+
+	Node *ehead2 = (Node*) malloc(sizeof(Node));
+
+	ehead2->key = LLONG_MIN;
+	ehead2->next.store(NULL, std::memory_order_seq_cst);
+	ehead2->status.store(3);
+	pthread_mutex_init(&ehead2->lock, NULL);
+
+	Node *etail2 = (Node*) malloc(sizeof(Node));
+
+	etail2->key = LLONG_MAX;
+	etail2->next.store(NULL, std::memory_order_seq_cst);
+	etail2->status.store(3, std::memory_order_seq_cst);
+	pthread_mutex_init(&etail2->lock, NULL);
+
+	ehead2->next.store(etail2, std::memory_order_seq_cst);
+
+	vhead = (NodeList*) malloc(sizeof(NodeList));
+
+	vhead->listhead.key = LLONG_MIN;
+	vhead->listhead.next.store(ehead1, std::memory_order_seq_cst);
+	vhead->marked.store(false, std::memory_order_seq_cst);
+	pthread_mutex_init(&vhead->listhead.lock, NULL);
+	vhead->next.store(NULL, std::memory_order_seq_cst);
+
+	vtail = (NodeList*) malloc(sizeof(NodeList));
+
+	vtail->listhead.key = LLONG_MAX;
+	vtail->listhead.next.store(ehead2, std::memory_order_seq_cst);
+	vtail->marked.store(false, std::memory_order_seq_cst);
+	pthread_mutex_init(&vtail->listhead.lock, NULL);
+	vtail->next.store(NULL, std::memory_order_seq_cst);
+
+	vhead->next.store(vtail, std::memory_order_seq_cst);
+
+	for(i=1; i<=initial_vertices; i++)
+	{
+		Node *ehead = (Node*) malloc(sizeof(Node));
+
+		ehead->key = LLONG_MIN;
+		ehead->next.store(NULL, std::memory_order_seq_cst);
+		ehead->status.store(3, std::memory_order_seq_cst);
+		pthread_mutex_init(&ehead->lock, NULL);
+
+		Node *etail = (Node*) malloc(sizeof(Node));
+
+		etail->key = LLONG_MAX;
+		etail->next.store(NULL, std::memory_order_seq_cst);
+		etail->status.store(3, std::memory_order_seq_cst);
+		pthread_mutex_init(&etail->lock, NULL);
+
+		ehead->next.store(etail, std::memory_order_seq_cst);
+
+		NodeList *newlisthead = (NodeList*) malloc(sizeof(NodeList));
+
+		newlisthead->listhead.key = i;
+		newlisthead->listhead.next.store(ehead, std::memory_order_seq_cst);
+		newlisthead->marked.store(false, std::memory_order_seq_cst);
+		pthread_mutex_init(&newlisthead->listhead.lock, NULL);
+		newlisthead->next.store(NULL, std::memory_order_seq_cst);
+
+		NodeList *temp = vhead;
+		while(temp->next.load(std::memory_order_seq_cst) != vtail)
+			temp = temp->next.load(std::memory_order_seq_cst);
+
+		temp->next.store(newlisthead, std::memory_order_seq_cst);
+		newlisthead->next.store(vtail, std::memory_order_seq_cst);
+
+		for(j=i+1;j<=initial_vertices;j++)
+		{
+			if(i == j)
+				continue;	//avoid self loops
+
+			Node *newnode = (Node*) malloc(sizeof(Node));
+			newnode->key = j;
+			newnode->next.store(NULL, std::memory_order_seq_cst);
+			newnode->status.store(3, std::memory_order_seq_cst);
+			pthread_mutex_init(&newnode->lock, NULL);
+
+			Node *pred = newlisthead->listhead.next;
+			Node *curr = pred->next;
+
+			while(curr->key < j)
+			{
+				pred = curr;
+				curr = curr->next;
+			}
+			pred->next = newnode;
+			newnode->next = curr;
+		
+			if(cycle_detect(j, i)) //remove edge
+				pred->next = curr;
+		}
+	}
+//	print_graph();
+}
+
 void create_initial_vertices(int initial_vertices)
 {
 	int i, j;

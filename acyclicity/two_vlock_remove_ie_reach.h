@@ -295,10 +295,10 @@ bool validateNode2(Node *pred, Node *curr)
 
 void adjremove(long long int v)
 {
-	NodeList *temp = vhead;
+	NodeList *temp = vhead->next;
 	Node *pred, *curr;
 
-	while(temp != NULL)
+	while(temp != vtail)
 	{
 		pthread_mutex_lock(&temp->lock);
 
@@ -306,6 +306,12 @@ void adjremove(long long int v)
 		{
 			pred = temp->listhead.next.load(std::memory_order_seq_cst);
 			curr = pred->next.load(std::memory_order_seq_cst);
+			
+			if(curr->next == NULL)
+			{
+				pthread_mutex_unlock(&temp->lock);
+				goto loop5;
+			}
 			
 			while(curr->key < v)
 			{

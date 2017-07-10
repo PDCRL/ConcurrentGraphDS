@@ -258,6 +258,9 @@ int main(int argc, char*argv[])	//command line arguments - #threads, #vertices i
 	vhead = vtail = NULL;
 
 	create_initial_vertices(initial_vertices);
+
+	input(initial_vertices);
+
 //	print_graph();
 	cout << "Number of Threads: " << NTHREADS << endl;
 	cout << "Initial graph with " << initial_vertices << " created." << endl;
