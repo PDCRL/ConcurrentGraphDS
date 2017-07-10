@@ -118,7 +118,7 @@ void create_initial_vertices(int initial_vertices)
 			temp->next = newlisthead;
 		}
 
-		for(j=i+1;j<=initial_vertices;j++)
+		for(j=1;j<=initial_vertices;j++)
 		{
 			if(i == j)
 				continue;	//avoid self loops
