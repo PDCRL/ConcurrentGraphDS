@@ -45,7 +45,7 @@ To run this binary file, use the following format:
 Example:
 1. For sequential program run: `./sequential 1 1000 20`
 2. Whereas for a Concurrent program run: `./conc 10 1000 20`
-(A concurrent program of 10 threads with 1000 intial vertices run for 20 seconds.)
+(A concurrent program of 10 threads with 1000 initial vertices run for 20 seconds.)
 
 You can vary the workload distribution of these operations inside each of these programs.
 
