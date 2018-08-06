@@ -1,6 +1,7 @@
 ****************************************
 Authors of this repository
 ****************************************
+<<<<<<< HEAD
 
 * Dr. Sathya Peri <sathya_p@iith.ac.in>
 
@@ -11,4 +12,20 @@ Authors of this repository
 Affiliation:
 Parallel and Distributed Computing Research Lab
 Department of Computer Science & Engineering
+=======
+* Bapi Chatterjee <bapchatt@in.ibm.com>^1
+
+* Sathya Peri <sathya_p@iith.ac.in>^2
+
+* Muktikanta Sa <cs15resch11012@iith.ac.in>^2
+
+* Nandini Singhal <cs15mtech01004@iith.ac.in>^2
+
+
+
+Affiliation:
+^1- IBM Research Lab, New Delhi, India
+^2-Parallel and Distributed Computing Research Lab,
+Department of Computer Science & Engineering,
+>>>>>>> 8dc9cfc850387922ef946b3c1c58ac0532700fa5
 Indian Institute of Technology Hyderabad, India
