@@ -101,6 +101,7 @@ typedef struct VNode{
 
 // BFSNode structure
 typedef struct BFSNode{
+        int ecount;
 	struct VNode *n; 
 	struct BFSNode *p; 
 	struct BFSNode *next; 
@@ -363,15 +364,16 @@ void locateCPlus(vlist_t *startV, vlist_t ** n1, vlist_t ** n2, int key){
        vlist_t  *currv, *predv;
         predv = startV;
         currv = startV->vnext.load();
-        while(true){
-         if(currv->val >= key){
+        while(currv && currv->val < key){
+        
+         predv = currv;
+         currv = (vlist_t*)get_unmarked_ref((long)currv->vnext.load());
+     }
+     
           (*n1) = predv;
           (*n2) = currv;
           return ;
-         }
-         predv = currv;
-         currv = (vlist_t*)get_unmarked_ref((long)currv->vnext.load());
-    }
+        
 } 
    // ContainsC++       
  bool ContainsCPlus(vlist_t ** n1, vlist_t ** n2, int key1, int key2){
@@ -438,8 +440,9 @@ void locateCPlus(vlist_t *startV, vlist_t ** n1, vlist_t ** n2, int key){
    } 
 
 // create BFSNode
-bfslist_t* createBFSNode(vlist_t *n, bfslist_t *p, bfslist_t *next){
+bfslist_t* createBFSNode(int ecount, vlist_t *n, bfslist_t *p, bfslist_t *next){
           bfslist_t * newbfs = (bfslist_t*) malloc(sizeof(bfslist_t));
+          newbfs->ecount = ecount;
           newbfs ->n = n;
           newbfs ->p = p;
           newbfs ->next = next;
@@ -457,7 +460,7 @@ bool checkVisited(int tid, VNode *v, int cValue){
     queue <bfslist_t*> que;
     cnt = cnt + 1;
     u->visitedArray[tid] = cnt;
-    bfslist_t *bfsNode = createBFSNode(u,NULL,NULL);
+    bfslist_t *bfsNode = createBFSNode(u->ecount,u,NULL,NULL);
     Insert(bfsHead, bfsTail, bfsNode);
     que.push(bfsNode);
     while(!que.empty()){ // run until que is not empty
@@ -470,14 +473,14 @@ bool checkVisited(int tid, VNode *v, int cValue){
                 if(adjVNode && adjVNode->vnext.load()){ // check for vertex is present in the list
 		   if (!is_marked_ref((long) adjVNode->vnext.load()) ){ // check the vertex is marked or not
                        if(adjVNode == v){ // found the key
-                          bfslist_t *bfsNode1 = createBFSNode(adjVNode,currentVNode,NULL);
+                          bfslist_t *bfsNode1 = createBFSNode(adjVNode->ecount, adjVNode,currentVNode,NULL);
                           Insert(bfsHead, bfsTail, bfsNode1);
                           return true; // reachable
                          }
                                 // if not visted, push in to the queue
                                 if(!checkVisited(tid, adjVNode, cnt) ){ 
                                    adjVNode->visitedArray[tid] = cnt;
-                                   bfslist_t *bfsNode2 = createBFSNode(adjVNode,currentVNode,NULL);
+                                   bfslist_t *bfsNode2 = createBFSNode(adjVNode->ecount, adjVNode,currentVNode,NULL);
                                    Insert(bfsHead, bfsTail, bfsNode2);
                                    que.push(bfsNode2);
                                 }
@@ -501,8 +504,8 @@ char* GetPath(int key1, int key2, int tid){
       vlist_t *  bTail = createV(INT_MAX,1);
       vlist_t *  bHead = createV(INT_MIN,1);
       
- bfslist_t *BFSHead = createBFSNode(bHead, NULL, NULL); 
- bfslist_t *BFSTail = createBFSNode(bTail,BFSHead, NULL);
+ bfslist_t *BFSHead = createBFSNode(1, bHead, NULL, NULL); 
+ bfslist_t *BFSTail = createBFSNode(1, bTail,BFSHead, NULL);
  BFSHead->next = BFSTail;
  BFSTail->next = BFSHead;
   bool status = Scan(tid, u, v, *BFSHead, *BFSTail); 
@@ -518,12 +521,12 @@ char* GetPath(int key1, int key2, int tid){
 bool Scan(int tid, vlist_t *u, vlist_t *v, bfslist_t &bfsHead, bfslist_t &bfsTail){
   vlist_t *  bTail = createV(INT_MAX,1);
       vlist_t *  bHead = createV(INT_MIN,1);
-  bfslist_t *oldbfsTreeHead = createBFSNode(bHead, NULL, NULL); 
- bfslist_t *oldbfsTreeTail = createBFSNode(bTail,oldbfsTreeHead, NULL);
+  bfslist_t *oldbfsTreeHead = createBFSNode(1, bHead, NULL, NULL); 
+ bfslist_t *oldbfsTreeTail = createBFSNode(1, bTail,oldbfsTreeHead, NULL);
  oldbfsTreeHead->next = oldbfsTreeTail;
  oldbfsTreeTail->next = oldbfsTreeHead; 
-  bfslist_t *newbfsTreeHead = createBFSNode(bHead, NULL, NULL); 
- bfslist_t *newbfsTreeTail = createBFSNode(bTail,newbfsTreeHead, NULL);
+  bfslist_t *newbfsTreeHead = createBFSNode(1, bHead, NULL, NULL); 
+ bfslist_t *newbfsTreeTail = createBFSNode(1, bTail,newbfsTreeHead, NULL);
  newbfsTreeHead->next = newbfsTreeTail;
  newbfsTreeTail->next = newbfsTreeHead;
  bool flag1 = TreeCollect(tid, u, v, *oldbfsTreeHead, *oldbfsTreeTail);
@@ -554,14 +557,14 @@ bool ComparePath(bfslist_t &oldbfsTreeTail, bfslist_t &newbfsTreeTail){
   bfslist_t *oldbfsTreeIt = &oldbfsTreeTail;
   bfslist_t *newbfsTreeIt = &newbfsTreeTail;
   do{
-    if(oldbfsTreeIt->n != newbfsTreeIt->n || oldbfsTreeIt->n->ecount != newbfsTreeIt->n->ecount || oldbfsTreeIt->p != newbfsTreeIt->p ){
+    if(oldbfsTreeIt->n != newbfsTreeIt->n || oldbfsTreeIt->ecount != newbfsTreeIt->ecount || oldbfsTreeIt->p != newbfsTreeIt->p ){
        return false;
     }
     oldbfsTreeIt = oldbfsTreeIt->p;
     newbfsTreeIt = newbfsTreeIt->p;
   }while(oldbfsTreeIt->p != NULL && newbfsTreeIt->p !=NULL );
   
-  if(oldbfsTreeIt->n != newbfsTreeIt->n || oldbfsTreeIt->n->ecount != newbfsTreeIt->n->ecount || oldbfsTreeIt->p != newbfsTreeIt->p ){
+  if(oldbfsTreeIt->n != newbfsTreeIt->n || oldbfsTreeIt->ecount != newbfsTreeIt->ecount || oldbfsTreeIt->p != newbfsTreeIt->p ){
        return false;
     }
   else
@@ -576,14 +579,14 @@ bool CompareTree(bfslist_t &oldbfsTreeHead, bfslist_t &newbfsTreeHead){
   bfslist_t *oldbfsTreeIt = &oldbfsTreeHead;
   bfslist_t *newbfsTreeIt = &newbfsTreeHead;
   do{
-    if(oldbfsTreeIt->n != newbfsTreeIt->n || oldbfsTreeIt->n->ecount != newbfsTreeIt->n->ecount || oldbfsTreeIt->p != newbfsTreeIt->p ){
+    if(oldbfsTreeIt->n != newbfsTreeIt->n || oldbfsTreeIt->ecount != newbfsTreeIt->ecount || oldbfsTreeIt->p != newbfsTreeIt->p ){
        return false;
     }
     oldbfsTreeIt = oldbfsTreeIt->next;
     newbfsTreeIt = newbfsTreeIt->next;
   }while(oldbfsTreeIt->next->n->val != INT_MAX && newbfsTreeIt->next->n->val !=INT_MAX );
   
-  if(oldbfsTreeIt->n != newbfsTreeIt->n || oldbfsTreeIt->n->ecount != newbfsTreeIt->n->ecount || oldbfsTreeIt->p != newbfsTreeIt->p ){
+  if(oldbfsTreeIt->n != newbfsTreeIt->n || oldbfsTreeIt->ecount != newbfsTreeIt->ecount || oldbfsTreeIt->p != newbfsTreeIt->p ){
        return false;
     }
   else

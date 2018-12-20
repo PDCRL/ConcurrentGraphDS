@@ -127,7 +127,7 @@ void* pthread_call(void* t)
 		l4:		u = (rand() % (vertexID))+1;	
 				v = (rand() % (vertexID))+1;
 				if(u == v || u == 0 || v == 0)	
-					goto l3;
+					goto l4;
 				pthread_mutex_lock(&lock);
 				G1.AddE(u,v); 
 				ops++;	
@@ -149,7 +149,7 @@ void* pthread_call(void* t)
 		
 		l6:		v = rand() % (vertexID);	
 				if(v == 0)
-					goto l2;
+					goto l6;
 				pthread_mutex_lock(&lock);
 				G1.ContainsV(v);
         			ops++;		

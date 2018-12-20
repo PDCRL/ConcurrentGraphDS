@@ -345,15 +345,16 @@ void locateCPlus(vlist_t *startV, vlist_t ** n1, vlist_t ** n2, int key){
        vlist_t  *currv, *predv;
         predv = startV;
         currv = startV->vnext.load();
-        while(true){
-         if(currv->val >= key){
-          (*n1) = predv;
-          (*n2) = currv;
-          return;
-         }
+        while(currv && currv->val < key){
+         
          predv = currv;
          currv = (vlist_t*)get_unmarked_ref((long)currv->vnext.load());
     }
+    
+          (*n1) = predv;
+          (*n2) = currv;
+          return;
+         
 } 
    // Contains++       
  bool ContainsCPlus(vlist_t ** n1, vlist_t ** n2, int key1, int key2){
