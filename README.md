@@ -5,6 +5,12 @@ The algorithm is described in technical report '**Maintaining Acyclicity of Conc
 The subdirectory */data_structure* provides the source code for Graph data structure variants, as decribed below:
 1. Sequential Graph data structure
 2. Concurrent Coarse Lock Graph Data Structure
+3. Concurrent Fine Lock Graph Data Structure without deletion of incoming edges of deleted vertices
+4. Concurrent Fine Lock Graph Data Structure with deletion of incoming edges of deleted vertices
+
+The subdirectory */acyclicity* provides the source code for Graph data structure variants which maintain acyclicity, as decribed below:
+1. Sequential Graph data structure
+2. Concurrent Coarse Lock Graph Data Structure
 3. Concurrent Fine Lock Graph Data Structure without deletion of incoming edges of deleted vertices (Cycle detection using collect)
 4. Concurrent Fine Lock Graph Data Structure with deletion of incoming edges of deleted vertices (Cycle detection using Reachability)
 5. Concurrent Fine Lock Graph Data Structure without deletion of incoming edges of deleted vertices (Cycle detection using collect)
